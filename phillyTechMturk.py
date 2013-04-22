@@ -18,7 +18,7 @@ from boto.mturk.connection import MTurkConnection
 
 # <markdowncell>
 
-# __Create a Mechanical Turk Connection using your AWS credentials__
+# __Create a Mechanical Turk Connection__ Use your own AWS credentials
 
 # <codecell>
 
@@ -39,6 +39,10 @@ mtc
 # <markdowncell>
 
 # __Testing: Retrieve the account balance__
+
+# <markdowncell>
+
+# In the sandbox, the account_balance will always be $10,000.000
 
 # <codecell>
 
@@ -64,9 +68,14 @@ selections = (('Person', 0), ('Animal', 1), ('WTF', 2))
 
 # <codecell>
 
+#show the images we will use
 for url in urls:
     img = Image(url=url)
     display(img)
+
+# <markdowncell>
+
+# Be sure to use very clear descriptions & titles etc.
 
 # <codecell>
 
@@ -100,19 +109,19 @@ remove_all_hits(mtc)
 
 # <codecell>
 
-def add_image(url, overview, _id, width=20, height=20):
+def add_image(url, overview, width=20, height=20):
     """Add an image to :param overview:. """
     overview.append_field('Text', title)
     overview.append(FormattedContent(
-        '<img src="{0}" alt="doc{1}" height="500" width="500"></img>'.format(url, _id)))
+        '<img src="{0}" alt="Pic" height="500" width="500"></img>'.format(url)))
     return overview
 
 # <codecell>
 
-def make_mc_question(url, selections, _id=''):
+def make_mc_question(url, selections):
     """Create a multiple choice question to classify :param urls:."""
     content = QuestionContent()
-    content = add_image(url, content, _id)
+    content = add_image(url, content)
     content.append_field(
         'Title', description)
     answers = SelectionAnswer(
@@ -130,10 +139,6 @@ def make_mc_question(url, selections, _id=''):
         is_required=True,
     )
     return question
-
-# <codecell>
-
-mc_question = make_mc_question(urls[0], selections, _id='')
 
 # <codecell>
 
@@ -156,6 +161,7 @@ def make_question(url, selections):
 # <codecell>
 
 question = make_question(urls[0], selections)
+question
 
 # <headingcell level=3>
 
@@ -221,7 +227,7 @@ def create_custom_qual_id(test_question, answer_key):
         auto_granted=False,
         description=description,
         keywords=keywords,
-        name='My Unique Name',
+        name='My Unique Qualification Name',
         retry_delay=None,
         status='Active',
         test=test_question,
@@ -232,28 +238,20 @@ def create_custom_qual_id(test_question, answer_key):
     print qual.QualificationTypeId
     return qual.QualificationTypeId
 
-# <codecell>
-
-# custom_id = create_custom_qual_id(test_question, answer_key)
-
-# <codecell>
-
-# mtc.dispose_qualification_type('2ZS6KW4ZMAZHU4P2P8ROQNVRH418HM')
-
 # <markdowncell>
 
-# _custom_id_: 2ZS6KW4ZMAZHU4P2P8ROQNVRH418HM
+# Creating a custom qualification generates a custom_id which can be used for any Requirement. However, this custom_id is created with a _unique_ name and re-executing the code with the same name will crash. You can either 1) dispose of the previously created qualification type or 2) use a different & unique name.
 
 # <codecell>
 
-custom_qualification_id = '2ZS6KW4ZMAZHU4P2P8ROQNVRH418HM'
+custom_id = create_custom_qual_id(test_question, answer_key)
 
 # <codecell>
 
 def make_qual_type(
     comparator="Exists",
     integer_value=None,
-    qual_type=custom_qualification_id,
+    qual_type=custom_id,
     required_to_preview=False,
 ):
     """Creates a qualification requirement for workers to accept HITs."""
@@ -269,7 +267,7 @@ def make_qual_type(
 custom_qual_type = make_qual_type(
     comparator="GreaterThanOrEqualTo",
     integer_value=1,
-    qual_type=custom_qualification_id,
+    qual_type=custom_id,
     required_to_preview=False,
 )
 
@@ -285,8 +283,6 @@ from collections import defaultdict
 ONE_HOUR = 3600  # seconds
 ONE_DAY = ONE_HOUR * 24
 ONE_WEEK = ONE_HOUR * 24 * 7
-
-# <codecell>
 
 hits = defaultdict(lambda : defaultdict())
 
@@ -317,13 +313,21 @@ print 'Created Hits: '
 for hit in hits.keys():
     print hit
 
+# <codecell>
+
+mtc.dispose_qualification_type(custom_id)
+
 # <headingcell level=4>
 
 # Turkers will preview, accept and respond to HITS.
 
+# <markdowncell>
+
+# At this point you can view and answer the HITs you have created in the worker Sandbox by searching for your requester_id here: https://workersandbox.mturk.com/mturk/findhits?match=false
+
 # <headingcell level=3>
 
-# Retrieve and review thier response:
+# Retrieve and review the responses:
 
 # <codecell>
 
